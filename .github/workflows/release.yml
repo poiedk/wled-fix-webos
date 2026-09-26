@@ -16,7 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build IPK
+      - name: Install official webOS CLI
+        run: npm install -g @webos-tools/cli
+
+      - name: Build IPK with ares-package
         run: |
           chmod +x scripts/build-ipk.sh
           ./scripts/build-ipk.sh
