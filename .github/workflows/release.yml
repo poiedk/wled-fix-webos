@@ -4,17 +4,30 @@ on:
   push:
     tags:
       - "v*"
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   release:
+    if: startsWith(github.ref, 'refs/tags/v') || contains(github.event.head_commit.message, '[release-v1.1.0]')
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: meta
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "tag=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v1.1.0" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install official webOS CLI
         run: npm install -g @webos-tools/cli
@@ -26,11 +39,13 @@ jobs:
 
       - name: Generate Homebrew repo feed
         run: |
-          python3 scripts/generate-repo.py "$GITHUB_REF_NAME" dist/*.ipk
+          python3 scripts/generate-repo.py "${{ steps.meta.outputs.tag }}" dist/*.ipk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           files: |
             dist/*.ipk
