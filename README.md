@@ -36,7 +36,7 @@ Hyperion can store a WLED mDNS service name, but mDNS discovery may fail on phon
 The first release is published:
 
 - Version: **v1.0.0**
-- IPK: `org.webosbrew.wledfix_1.0.0_all.ipk`
+- IPK: `org.webosbrew.wledfix_1.0.1_all.ipk`
 - Homebrew feed: `repo.json`
 
 Release page:
@@ -67,13 +67,13 @@ After adding the repository, **WLED Fix** should appear in Homebrew Channel and 
 The v1.0.0 IPK is available at:
 
 ```text
-https://github.com/poiedk/wled-fix-webos/releases/download/v1.0.0/org.webosbrew.wledfix_1.0.0_all.ipk
+https://github.com/poiedk/wled-fix-webos/releases/download/v1.0.0/org.webosbrew.wledfix_1.0.1_all.ipk
 ```
 
-If you copy it to the TV as `/tmp/org.webosbrew.wledfix_1.0.0_all.ipk`, install it with:
+If you copy it to the TV as `/tmp/org.webosbrew.wledfix_1.0.1_all.ipk`, install it with:
 
 ```sh
-opkg install /tmp/org.webosbrew.wledfix_1.0.0_all.ipk
+opkg install /tmp/org.webosbrew.wledfix_1.0.1_all.ipk
 ```
 
 Then launch **WLED Fix** from the LG launcher.
@@ -121,3 +121,18 @@ For future versions:
 The **Release** GitHub Actions workflow builds the IPK, generates `repo.json`, calculates the SHA-256 hash, and publishes both files to the release.
 
 The Homebrew repository URL stays the same because it always points to the latest release.
+
+
+## v1.0.1 packaging fix
+
+v1.0.1 fixes the webOS package layout used by v1.0.0. The app is now packaged under:
+
+```text
+/usr/palm/applications/org.webosbrew.wledfix
+```
+
+inside the IPK data archive, which is the layout expected by the webOS installer.
+
+The custom feed also uses `shortDescription`, so Homebrew Channel can display the package description correctly.
+
+If v1.0.0 failed with **Failed to extract package**, refresh/reopen Homebrew Channel and install v1.0.1.
