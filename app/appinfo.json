@@ -1,0 +1,9 @@
+{
+  "id": "org.webosbrew.wledfix",
+  "version": "1.0.0",
+  "vendor": "poiedk",
+  "type": "web",
+  "main": "index.html",
+  "title": "WLED Fix",
+  "icon": "icon.png"
+}
