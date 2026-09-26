@@ -35,13 +35,22 @@
     .settings .row.focus{border:2px solid #f2f2f2;border-radius:4px}
     .danger{color:#e0b9b9}
     .technical{font-size:17px;line-height:1.45;color:#8f97a3;white-space:pre-wrap;margin:8px 4px 0;max-height:95px;overflow:hidden}
+  
+    .exitOverlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.58);align-items:center;justify-content:center;z-index:20}
+    .exitOverlay.show{display:flex}
+    .exitBox{width:560px;background:#1a2029;border:1px solid #4b5360;padding:34px 38px}
+    .exitTitle{font-size:30px;margin-bottom:12px}
+    .exitText{font-size:21px;color:#aeb6c2;margin-bottom:28px}
+    .exitButtons{display:flex;gap:14px}
+    .exitBtn{flex:1;border:2px solid transparent;background:#2b323d;padding:14px;text-align:center;font-size:22px}
+    .exitBtn.focus{border-color:#f2f2f2;background:#3a424f}
   </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="title">WLED Fix</div>
-    <div class="version">v1.1.0</div>
+    <div class="version">v1.1.1</div>
   </div>
 
   <div id="main" class="screen active">
@@ -80,10 +89,20 @@
     <div class="hint">↑/↓ Navigate &nbsp;&nbsp; ←/→ Change &nbsp;&nbsp; OK Select &nbsp;&nbsp; BACK Save & return</div>
   </div>
 </div>
+<div id="exitOverlay" class="exitOverlay">
+  <div class="exitBox">
+    <div class="exitTitle">Exit WLED Fix?</div>
+    <div class="exitText">The app will close and return to the webOS launcher.</div>
+    <div class="exitButtons">
+      <div id="exitCancel" class="exitBtn focus">Cancel</div>
+      <div id="exitConfirm" class="exitBtn">Exit</div>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
-  var VERSION="1.1.0";
+  var VERSION="1.1.1";
   var DEFAULTS={
     autoScan:true,
     autoClose:false,
@@ -101,7 +120,7 @@
     verbose:false
   };
   var settings=loadSettings();
-  var screen="main", focus=0, busy=false, bridge=null, lastRaw="";
+  var screen="main", focus=0, busy=false, bridge=null, lastRaw="", exitPrompt=false, exitFocus=0;
 
   function clone(o){var n={},k;for(k in o)n[k]=o[k];return n;}
   function loadSettings(){
@@ -213,7 +232,12 @@
   }
 
   function finish(data,raw){
-    var result=data.RESULT||"ERROR";
+    var result=data.RESULT||"";
+    if(!result){
+      if(data.NEW_TARGET && data.WLED_IP) result="UPDATED";
+      else if(data.TV_IP && data.WLED_IP && data.HYPERION_TARGET && data.WLED_IP===data.HYPERION_TARGET) result="OK";
+      else result="ERROR";
+    }
     lastRaw=raw||"";
     document.getElementById("tvIp").textContent=data.TV_IP||"—";
     document.getElementById("wledIp").textContent=data.WLED_IP||"—";
@@ -266,12 +290,28 @@
     change(it,1);
   }
 
+  function renderExit(){
+    var overlay=document.getElementById("exitOverlay");
+    overlay.className="exitOverlay"+(exitPrompt?" show":"");
+    document.getElementById("exitCancel").className="exitBtn"+(exitFocus===0?" focus":"");
+    document.getElementById("exitConfirm").className="exitBtn"+(exitFocus===1?" focus":"");
+  }
+  function openExit(){exitPrompt=true;exitFocus=0;renderExit();}
+  function closeExit(){exitPrompt=false;renderExit();}
+
   document.addEventListener("keydown",function(e){
     var code=e.keyCode||e.which,items,max;
+    if(exitPrompt){
+      if(code===37 || code===38){exitFocus=0;renderExit();e.preventDefault();return;}
+      if(code===39 || code===40){exitFocus=1;renderExit();e.preventDefault();return;}
+      if(code===13){e.preventDefault();if(exitFocus===1)window.close();else closeExit();return;}
+      if(code===461 || code===27){closeExit();e.preventDefault();return;}
+      return;
+    }
     if(code===461 || code===27){
       if(screen==="advanced"){saveSettings();show("simple");}
       else if(screen==="simple"){saveSettings();show("main");}
-      else window.close();
+      else openExit();
       e.preventDefault();return;
     }
     if(busy && screen==="main")return;
