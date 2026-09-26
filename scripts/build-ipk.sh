@@ -12,7 +12,7 @@ PY
 OUT_DIR="$ROOT/dist"
 WORK="$ROOT/.build"
 PKG="$APP_ID"
-APP_DEST="$WORK/data/media/developer/apps/usr/palm/applications/$APP_ID"
+APP_DEST="$WORK/data/usr/palm/applications/$APP_ID"
 
 rm -rf "$WORK" "$OUT_DIR"
 mkdir -p "$WORK/control" "$APP_DEST" "$OUT_DIR"
