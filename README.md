@@ -31,9 +31,77 @@ Hyperion can store a WLED mDNS service name, but mDNS discovery may fail on phon
 - WLED 0.16.0
 - DDP streaming
 
-## Install
+## Current status
 
-Download the latest `.ipk` from GitHub Releases and install it on the TV:
+The source code, IPK build workflow, and Homebrew custom-feed generator are in place.
+
+**There is currently no GitHub Release published yet.**  
+Because of that, this Homebrew repository URL does **not** work yet:
+
+```text
+https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
+```
+
+It becomes valid automatically after the first tagged release is published.
+
+## Build locally
+
+```sh
+chmod +x scripts/build-ipk.sh
+./scripts/build-ipk.sh
+```
+
+The package is written to:
+
+```text
+dist/org.webosbrew.wledfix_<version>_all.ipk
+```
+
+## Create the first release
+
+Create and push the first version tag:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The **Release** GitHub Actions workflow will then:
+
+1. build the IPK,
+2. generate `repo.json`,
+3. calculate and include the IPK SHA-256 hash,
+4. create the GitHub Release,
+5. upload both the IPK and `repo.json` as release assets.
+
+After that, the stable custom-repository URL is:
+
+```text
+https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
+```
+
+## Add to Homebrew Channel
+
+Only **after the first release exists**, add the repository in:
+
+**Homebrew Channel → Settings → Add repository**
+
+using:
+
+```text
+https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
+```
+
+You can also open the Add Repository screen over SSH:
+
+```sh
+luna-send -n 1 luna://com.webos.applicationManager/launch \
+'{"id":"org.webosbrew.hbchannel","params":{"launchMode":"addRepository","url":"https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json"}}'
+```
+
+## Install from an IPK manually
+
+Once an IPK exists, copy it to the TV and install it, for example:
 
 ```sh
 opkg install /tmp/org.webosbrew.wledfix_1.0.0_all.ipk
@@ -41,9 +109,9 @@ opkg install /tmp/org.webosbrew.wledfix_1.0.0_all.ipk
 
 Then launch **WLED Fix** from the LG launcher.
 
-## Manual run
+## Manual run after installation
 
-The script ships inside the app package. On a standard Homebrew install:
+The script ships inside the app package:
 
 ```sh
 sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh
@@ -51,35 +119,21 @@ sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.s
 
 ## Safety
 
-Before changing Hyperion's DB:
+Before changing Hyperion's database, WLED Fix refreshes:
 
 ```text
 /home/root/.hyperion/db/hyperion.db.wled-auto-backup
 ```
 
-is refreshed from the current database.
+The script only updates the WLED device entry for Hyperion instance 0. If Hyperion already points to the detected WLED IP, it exits without modifying the database or restarting Hyperion.
 
-The script only updates the WLED device entry for Hyperion instance 0.
+## Release updates
 
-## Build
+For future versions:
 
-```sh
-./scripts/build-ipk.sh
-```
+1. update the version in `app/appinfo.json`,
+2. commit the change,
+3. create a matching tag such as `v1.1.0`,
+4. push the tag.
 
-The package is written to `dist/`.
-
-## Release
-
-Push a tag such as `v1.0.0`. GitHub Actions builds the IPK and publishes it as a Release asset.
-
-
-## Add to Homebrew Channel
-
-After the first tagged release is published, add this custom repository URL in **Homebrew Channel → Settings → Add repository**:
-
-```text
-https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
-```
-
-The feed always points to the latest GitHub Release and includes the SHA-256 hash of the IPK, so Homebrew Channel can install and update WLED Fix directly.
+The Homebrew feed URL stays the same because it always resolves through the latest GitHub Release.
