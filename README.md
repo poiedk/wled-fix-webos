@@ -1,138 +1,112 @@
 # WLED Fix for webOS
 
-One-click WLED rediscovery for rooted LG webOS TVs running Hyperion.NG.
-
-## Why
-
-Hyperion can store a WLED mDNS service name, but mDNS discovery may fail on phone hotspots or networks that isolate multicast. WLED Fix avoids that dependency by discovering WLED over HTTP on the TV's current IPv4 subnet.
-
-## What it does
-
-- Detects the TV's current Wi-Fi IPv4 subnet.
-- Scans the local /24 for a WLED device via `/json/info`.
-- Verifies `"brand":"WLED"`.
-- Reads Hyperion's current WLED target from `hyperion.db`.
-- If the IP changed, backs up the database, updates only `host` and `hostList`, and restarts Hyperion.
-- If the target is already correct, exits without touching Hyperion.
-- Runs from a launcher app on the TV.
-
-## Requirements
-
-- Rooted LG webOS TV
-- Homebrew Channel
-- Hyperion.NG loader
-- WLED on the same IPv4 /24 subnet as the TV
-- `sqlite3`, `wget`, `ifconfig`
-
-## Tested setup
-
-- LG webOS 3.4.x
-- Hyperion.NG 2.0.16
-- WLED 0.16.0
-- DDP streaming
+WLED Fix is a remote-friendly utility for rooted LG webOS TVs running Hyperion.NG with WLED.
 
 ## Current release
 
-The first release is published:
+**v1.1.0**
 
-- Version: **v1.0.0**
-- IPK: `org.webosbrew.wledfix_1.0.1_all.ipk`
-- Homebrew feed: `repo.json`
+Highlights:
 
-Release page:
+- TV-native dark UI designed for remote control
+- **BACK = Exit**
+- Simple and Advanced Settings
+- faster WLED discovery
+- Hyperion target verification after a fix
+- optional LED test
+- configurable backup retention
+- optional technical details and verbose logging
+- dark launcher icon
 
-```text
-https://github.com/poiedk/wled-fix-webos/releases/tag/v1.0.0
-```
+## Homebrew Channel repository
 
-## Add to Homebrew Channel
-
-In **Homebrew Channel → Settings → Add repository**, add:
+Add this URL once in **Homebrew Channel → Settings → Add repository**:
 
 ```text
 https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
 ```
 
-You can also open the Add Repository screen over SSH:
+SSH shortcut:
 
 ```sh
 luna-send -n 1 luna://com.webos.applicationManager/launch \
 '{"id":"org.webosbrew.hbchannel","params":{"launchMode":"addRepository","url":"https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json"}}'
 ```
 
-After adding the repository, **WLED Fix** should appear in Homebrew Channel and can be installed or updated from there.
+## Simple Settings
 
-## Install manually
+- **Auto scan on launch** — ON
+- **Auto close after success** — OFF
+- **Verify Hyperion after fix** — ON
+- **Test LEDs after fix** — OFF
+- **Show technical details** — OFF
 
-The v1.0.0 IPK is available at:
+## Advanced Settings
 
-```text
-https://github.com/poiedk/wled-fix-webos/releases/download/v1.0.0/org.webosbrew.wledfix_1.0.1_all.ipk
-```
+- **Fast scan** — ON
+- **Full subnet scan fallback** — ON
+- **Scan timeout** — 1 or 2 seconds
+- **Hyperion instance** — 0–3
+- **Restart Hyperion after IP change** — ON
+- **Network interface** — wlan0 / eth0
+- **Backup Hyperion DB before change** — ON
+- **Keep previous backups** — 1 / 3 / 5
+- **Verbose logging** — OFF
+- **Reset settings to defaults**
 
-If you copy it to the TV as `/tmp/org.webosbrew.wledfix_1.0.1_all.ipk`, install it with:
+Settings are stored locally by the webOS app and persist across launches.
+
+## Discovery strategy
+
+With Fast Scan enabled, WLED Fix tries:
+
+1. the current Hyperion target,
+2. devices already present in the TV ARP table,
+3. a full /24 scan only when needed.
+
+WLED is confirmed through its `/json/info` endpoint and `"brand":"WLED"`.
+
+## What happens when the WLED IP changes
+
+WLED Fix can:
+
+1. create a Hyperion DB backup,
+2. update `host` and `hostList`,
+3. restart Hyperion,
+4. verify that `LEDDEVICE` is enabled again,
+5. optionally send a short LED test.
+
+If the existing target is already correct, the database is not modified.
+
+## Requirements
+
+- rooted LG webOS TV
+- Homebrew Channel
+- Hyperion.NG loader
+- WLED on the same IPv4 /24 network
+- `sqlite3`, `wget`, `ifconfig`
+
+Tested with LG webOS 3.4.x, Hyperion.NG 2.0.16 and WLED 0.16.0.
+
+## Build
+
+Packages are built with the official webOS `ares-package` CLI.
 
 ```sh
-opkg install /tmp/org.webosbrew.wledfix_1.0.1_all.ipk
-```
-
-Then launch **WLED Fix** from the LG launcher.
-
-## Manual run after installation
-
-The discovery script ships inside the application:
-
-```sh
-sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh
-```
-
-## Build locally
-
-```sh
+npm install -g @webos-tools/cli
 chmod +x scripts/build-ipk.sh
 ./scripts/build-ipk.sh
 ```
 
-The package is written to:
+Output is written to `dist/`.
 
-```text
-dist/org.webosbrew.wledfix_<version>_all.ipk
-```
+## Releases
 
-## Safety
+Creating a `v*` tag triggers GitHub Actions to:
 
-Before changing Hyperion's database, WLED Fix refreshes:
+1. build the IPK with `ares-package`,
+2. generate `repo.json`,
+3. calculate the IPK SHA-256,
+4. publish both files as GitHub Release assets.
 
-```text
-/home/root/.hyperion/db/hyperion.db.wled-auto-backup
-```
-
-The script only updates the WLED device entry for Hyperion instance 0. If Hyperion already points to the detected WLED IP, it exits without modifying the database or restarting Hyperion.
-
-## Future releases
-
-For future versions:
-
-1. update the version in `app/appinfo.json`,
-2. commit the change,
-3. create a matching tag such as `v1.1.0`,
-4. push the tag.
-
-The **Release** GitHub Actions workflow builds the IPK, generates `repo.json`, calculates the SHA-256 hash, and publishes both files to the release.
-
-The Homebrew repository URL stays the same because it always points to the latest release.
-
-
-## v1.0.1 packaging fix
-
-v1.0.1 fixes the webOS package layout used by v1.0.0. The app is now packaged under:
-
-```text
-/usr/palm/applications/org.webosbrew.wledfix
-```
-
-inside the IPK data archive, which is the layout expected by the webOS installer.
-
-The custom feed also uses `shortDescription`, so Homebrew Channel can display the package description correctly.
-
-If v1.0.0 failed with **Failed to extract package**, refresh/reopen Homebrew Channel and install v1.0.1.
+The Homebrew repository URL remains unchanged between releases.
