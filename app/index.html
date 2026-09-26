@@ -4,269 +4,291 @@
   <meta charset="utf-8">
   <title>WLED Fix</title>
   <style>
-    html,body{width:100%;height:100%;margin:0;background:#0d1118;color:#f4f7fb;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+    html,body{width:100%;height:100%;margin:0;background:#11151d;color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
     *{box-sizing:border-box}
-    .app{height:100%;padding:58px 78px 42px;display:flex;flex-direction:column}
-    .header{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.16);padding-bottom:20px}
-    .title{font-size:48px;font-weight:500;letter-spacing:.2px}
-    .version{font-size:20px;color:#aeb7c4}
-    .content{flex:1;padding-top:34px;min-height:0}
-    .screen{display:none;height:100%}
-    .screen.active{display:flex;flex-direction:column}
-    .statusHero{font-size:34px;margin-bottom:28px}
-    .statusHero.ok{color:#dff7e8}
-    .statusHero.err{color:#ffdede}
-    .grid{display:grid;grid-template-columns:260px 1fr;gap:15px 34px;font-size:25px;max-width:900px}
-    .label{color:#9fa9b8}
-    .value{color:#fff}
-    .message{margin-top:30px;font-size:24px;color:#d7dde6;max-width:1050px;line-height:1.45}
-    .spinner{display:inline-block;width:22px;height:22px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .9s linear infinite;margin-right:12px;vertical-align:-3px}
+    .app{height:100%;display:flex;flex-direction:column;padding:46px 68px 34px}
+    .top{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #3a404b;padding-bottom:20px}
+    .title{font-size:52px;font-weight:400;letter-spacing:.2px}
+    .version{font-size:20px;color:#a7adb7}
+    .screen{display:none;flex:1;min-height:0}
+    .screen.active{display:flex}
+    #main{flex-direction:column}
+    .result{display:flex;align-items:center;gap:22px;padding:36px 4px 24px}
+    .resultIcon{width:58px;height:58px;border:3px solid #d9dde3;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px}
+    .resultText{font-size:34px}
+    .statusSub{font-size:22px;color:#a7adb7;margin-top:8px}
+    .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin:4px 0 30px}
+    .card{border-top:1px solid #3a404b;padding:18px 4px}
+    .label{font-size:19px;color:#959ca7;text-transform:uppercase;letter-spacing:1px}
+    .value{font-size:30px;margin-top:9px}
+    .actions{margin-top:auto;border-top:1px solid #3a404b;padding-top:20px}
+    .row{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:24px;border:2px solid transparent;border-radius:4px}
+    .row.focus{border-color:#f2f2f2;background:#2a303b}
+    .row .right{color:#d9dde3}
+    .hint{padding-top:19px;color:#9aa1ab;font-size:19px}
+    .spinner{width:42px;height:42px;border:4px solid #4a515e;border-top-color:#f4f6f8;border-radius:50%;animation:spin .9s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .actions{margin-top:auto;display:flex;gap:18px;padding-top:34px}
-    .button,.row{border:2px solid transparent;border-radius:7px;background:rgba(255,255,255,.055);color:#f6f8fb}
-    .button{padding:15px 28px;font-size:24px;min-width:190px;text-align:center}
-    .focus{border-color:#cbd5e1;background:rgba(255,255,255,.15);box-shadow:0 0 0 2px rgba(255,255,255,.08)}
-    .settingsTitle{font-size:30px;margin-bottom:22px}
-    .rows{display:flex;flex-direction:column;gap:8px;max-width:1050px}
-    .row{display:grid;grid-template-columns:1fr 240px;align-items:center;min-height:58px;padding:0 20px;font-size:23px}
-    .row .right{text-align:right;color:#dce3eb}
-    .row.sub{grid-template-columns:1fr}
-    .row.danger .right{color:#ffdddd}
-    .hint{font-size:18px;color:#8f99a8;margin-top:14px}
-    .footer{height:42px;border-top:1px solid rgba(255,255,255,.14);padding-top:15px;color:#9fa9b8;font-size:19px;display:flex;gap:34px}
-    .details{margin-top:22px;padding:16px 18px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.1);font-family:monospace;font-size:17px;white-space:pre-wrap;max-height:170px;overflow:hidden;color:#c8d0da}
+    .settings{flex-direction:column;padding-top:22px}
+    .sectionTitle{font-size:28px;margin:0 0 18px 4px;color:#e9edf2}
+    .settingsList{flex:1;overflow:hidden}
+    .settings .row{border-bottom:1px solid #303640;border-radius:0}
+    .settings .row.focus{border:2px solid #f2f2f2;border-radius:4px}
+    .danger{color:#e0b9b9}
+    .technical{font-size:17px;line-height:1.45;color:#8f97a3;white-space:pre-wrap;margin:8px 4px 0;max-height:95px;overflow:hidden}
   </style>
 </head>
 <body>
 <div class="app">
-  <div class="header">
+  <div class="top">
     <div class="title">WLED Fix</div>
     <div class="version">v1.1.0</div>
   </div>
 
-  <div class="content">
-    <section id="main" class="screen active">
-      <div id="hero" class="statusHero"><span class="spinner"></span>Searching for WLED…</div>
-      <div class="grid">
-        <div class="label">TV IP</div><div id="tvIp" class="value">—</div>
-        <div class="label">WLED</div><div id="wledIp" class="value">—</div>
-        <div class="label">Hyperion target</div><div id="hyperionIp" class="value">—</div>
-        <div class="label">Verification</div><div id="verify" class="value">—</div>
+  <div id="main" class="screen active">
+    <div class="result">
+      <div id="resultIcon" class="resultIcon">•</div>
+      <div>
+        <div id="resultText" class="resultText">Ready</div>
+        <div id="resultSub" class="statusSub">Press OK to scan, or open Settings.</div>
       </div>
-      <div id="message" class="message">Checking the current network and Hyperion configuration.</div>
-      <div id="details" class="details" style="display:none"></div>
-      <div class="actions">
-        <div class="button focus" data-main-action="run">Run Fix</div>
-        <div class="button" data-main-action="settings">Settings</div>
-      </div>
-    </section>
+    </div>
 
-    <section id="simple" class="screen">
-      <div class="settingsTitle">Settings</div>
-      <div id="simpleRows" class="rows"></div>
-      <div class="hint">LEFT / RIGHT: Change &nbsp;&nbsp; OK: Select &nbsp;&nbsp; BACK: Save & return</div>
-    </section>
+    <div class="grid">
+      <div class="card"><div class="label">TV IP</div><div id="tvIp" class="value">—</div></div>
+      <div class="card"><div class="label">WLED</div><div id="wledIp" class="value">—</div></div>
+      <div class="card"><div class="label">Hyperion target</div><div id="hyperionIp" class="value">—</div></div>
+    </div>
 
-    <section id="advanced" class="screen">
-      <div class="settingsTitle">Advanced Settings</div>
-      <div id="advancedRows" class="rows"></div>
-      <div class="hint">LEFT / RIGHT: Change &nbsp;&nbsp; OK: Select &nbsp;&nbsp; BACK: Save & return</div>
-    </section>
+    <div id="technical" class="technical"></div>
+
+    <div class="actions">
+      <div class="row focus" data-action="run"><span>Run WLED Fix</span><span class="right">OK</span></div>
+      <div class="row" data-action="settings"><span>Settings</span><span class="right">›</span></div>
+    </div>
+    <div class="hint">↑/↓ Navigate &nbsp;&nbsp; OK Select &nbsp;&nbsp; BACK Exit</div>
   </div>
 
-  <div id="footer" class="footer">
-    <span>OK: Select</span><span>BACK: Exit</span>
+  <div id="simple" class="screen settings">
+    <div class="sectionTitle">Settings</div>
+    <div id="simpleList" class="settingsList"></div>
+    <div class="hint">↑/↓ Navigate &nbsp;&nbsp; ←/→ Change &nbsp;&nbsp; OK Select &nbsp;&nbsp; BACK Save & return</div>
+  </div>
+
+  <div id="advanced" class="screen settings">
+    <div class="sectionTitle">Advanced Settings</div>
+    <div id="advancedList" class="settingsList"></div>
+    <div class="hint">↑/↓ Navigate &nbsp;&nbsp; ←/→ Change &nbsp;&nbsp; OK Select &nbsp;&nbsp; BACK Save & return</div>
   </div>
 </div>
 
 <script>
 (function(){
-  var defaults={
-    autoScan:true,autoClose:false,verify:true,testLeds:false,technical:false,
-    fast:true,full:true,timeout:"1",instance:"0",restart:true,iface:"wlan0",
-    backup:true,keepBackups:"3",verbose:false
+  var VERSION="1.1.0";
+  var DEFAULTS={
+    autoScan:true,
+    autoClose:false,
+    verify:true,
+    testLeds:false,
+    showTechnical:false,
+    fastScan:true,
+    fullScan:true,
+    timeout:1,
+    instance:0,
+    restart:true,
+    iface:"wlan0",
+    backup:true,
+    keepBackups:3,
+    verbose:false
   };
   var settings=loadSettings();
-  var screen="main", mainIndex=0, rowIndex=0, bridge=null, running=false, autoCloseTimer=null;
+  var screen="main", focus=0, busy=false, bridge=null, lastRaw="";
+
+  function clone(o){var n={},k;for(k in o)n[k]=o[k];return n;}
+  function loadSettings(){
+    var s=clone(DEFAULTS), raw, x, k;
+    try{
+      raw=localStorage.getItem("wledfix.settings.v1");
+      if(raw){x=JSON.parse(raw);for(k in s){if(typeof x[k]!=="undefined")s[k]=x[k];}}
+    }catch(e){}
+    return s;
+  }
+  function saveSettings(){try{localStorage.setItem("wledfix.settings.v1",JSON.stringify(settings));}catch(e){}}
+
+  function show(id){
+    document.getElementById("main").className="screen"+(id==="main"?" active":"");
+    document.getElementById("simple").className="screen settings"+(id==="simple"?" active":"");
+    document.getElementById("advanced").className="screen settings"+(id==="advanced"?" active":"");
+    screen=id;focus=0;render();
+  }
 
   var simpleItems=[
     {k:"autoScan",label:"Auto scan on launch",type:"bool"},
     {k:"autoClose",label:"Auto close after success",type:"bool"},
     {k:"verify",label:"Verify Hyperion after fix",type:"bool"},
     {k:"testLeds",label:"Test LEDs after fix",type:"bool"},
-    {k:"technical",label:"Show technical details",type:"bool"},
-    {k:"advanced",label:"Advanced settings",type:"nav"}
+    {k:"showTechnical",label:"Show technical details",type:"bool"},
+    {action:"advanced",label:"Advanced settings",value:"›"}
   ];
   var advancedItems=[
-    {k:"fast",label:"Fast scan",type:"bool"},
-    {k:"full",label:"Full subnet scan fallback",type:"bool"},
-    {k:"timeout",label:"Scan timeout",type:"enum",values:["1","2"],suffix:" sec"},
-    {k:"instance",label:"Hyperion instance",type:"enum",values:["0","1","2","3"]},
-    {k:"restart",label:"Restart Hyperion after IP change",type:"bool"},
-    {k:"iface",label:"Network interface",type:"enum",values:["wlan0","eth0"]},
-    {k:"backup",label:"Backup Hyperion DB before change",type:"bool"},
-    {k:"keepBackups",label:"Keep backups",type:"enum",values:["1","3","5"]},
+    {k:"fastScan",label:"Fast scan",type:"bool"},
+    {k:"fullScan",label:"Full subnet scan fallback",type:"bool"},
+    {k:"timeout",label:"Scan timeout",type:"cycle",vals:[1,2],suffix:" sec"},
+    {k:"instance",label:"Hyperion instance",type:"cycle",vals:[0,1,2,3]},
+    {k:"restart",label:"Restart Hyperion after change",type:"bool"},
+    {k:"iface",label:"Network interface",type:"cycle",vals:["wlan0","eth0"]},
+    {k:"backup",label:"Backup Hyperion DB",type:"bool"},
+    {k:"keepBackups",label:"Keep backups",type:"cycle",vals:[1,3,5]},
     {k:"verbose",label:"Verbose logging",type:"bool"},
-    {k:"reset",label:"Reset settings to defaults",type:"reset"}
+    {action:"reset",label:"Reset to defaults",value:"OK",danger:true}
   ];
 
-  function loadSettings(){
-    var s={}; for(var k in defaults)s[k]=defaults[k];
-    try{var saved=JSON.parse(localStorage.getItem("wledfix.settings")||"{}");for(var p in saved)if(defaults.hasOwnProperty(p))s[p]=saved[p];}catch(e){}
-    return s;
+  function valText(it){
+    if(it.action)return it.value||"";
+    if(it.type==="bool")return settings[it.k]?"ON":"OFF";
+    return String(settings[it.k])+(it.suffix||"");
   }
-  function saveSettings(){try{localStorage.setItem("wledfix.settings",JSON.stringify(settings));}catch(e){}}
-  function setScreen(name){
-    screen=name; rowIndex=0;
-    var ids=["main","simple","advanced"];
-    for(var i=0;i<ids.length;i++)document.getElementById(ids[i]).className="screen"+(ids[i]===name?" active":"");
-    if(name==="main"){renderMainFocus();document.getElementById("footer").innerHTML="<span>OK: Select</span><span>BACK: Exit</span>";}
-    else{renderRows();document.getElementById("footer").innerHTML="<span>LEFT/RIGHT: Change</span><span>OK: Select</span><span>BACK: Save & return</span>";}
-  }
-  function renderMainFocus(){
-    var b=document.querySelectorAll("[data-main-action]");
-    for(var i=0;i<b.length;i++)b[i].className="button"+(i===mainIndex?" focus":"");
-  }
-  function valText(item){
-    if(item.type==="bool")return settings[item.k]?"ON":"OFF";
-    if(item.type==="enum")return settings[item.k]+(item.suffix||"");
-    if(item.type==="nav")return "›";
-    if(item.type==="reset")return "OK";
-    return "";
-  }
-  function renderRows(){
-    var items=screen==="simple"?simpleItems:advancedItems;
-    var host=document.getElementById(screen==="simple"?"simpleRows":"advancedRows");
-    var out="";
-    for(var i=0;i<items.length;i++){
-      var it=items[i];
-      out+='<div class="row '+(i===rowIndex?'focus ':'')+(it.type==="reset"?'danger ':'')+'" data-i="'+i+'"><div>'+it.label+'</div><div class="right">'+valText(it)+'</div></div>';
+
+  function renderList(id,items){
+    var host=document.getElementById(id),h="",i,it;
+    for(i=0;i<items.length;i++){
+      it=items[i];
+      h+='<div class="row '+(i===focus?"focus ":"")+(it.danger?"danger":"")+'" data-idx="'+i+'"><span>'+it.label+'</span><span class="right">'+valText(it)+'</span></div>';
     }
-    host.innerHTML=out;
+    host.innerHTML=h;
   }
-  function changeCurrent(dir){
-    var items=screen==="simple"?simpleItems:advancedItems, it=items[rowIndex];
-    if(!it)return;
-    if(it.type==="bool")settings[it.k]=!settings[it.k];
-    else if(it.type==="enum"){
-      var a=it.values, idx=a.indexOf(String(settings[it.k]));
-      if(idx<0)idx=0; idx=(idx+dir+a.length)%a.length; settings[it.k]=a[idx];
+
+  function render(){
+    if(screen==="main"){
+      var rows=document.querySelectorAll("#main .row"),i;
+      for(i=0;i<rows.length;i++)rows[i].className="row"+(i===focus?" focus":"");
+      document.getElementById("technical").style.display=settings.showTechnical?"block":"none";
+      document.getElementById("technical").textContent=settings.showTechnical?lastRaw:"";
+    }else if(screen==="simple")renderList("simpleList",simpleItems);
+    else renderList("advancedList",advancedItems);
+  }
+
+  function change(it,dir){
+    var vals,i;
+    if(it.type==="bool"){settings[it.k]=!settings[it.k];}
+    else if(it.type==="cycle"){
+      vals=it.vals;i=vals.indexOf(settings[it.k]);if(i<0)i=0;
+      i=(i+(dir>0?1:-1)+vals.length)%vals.length;settings[it.k]=vals[i];
     }
-    saveSettings();renderRows();
+    saveSettings();render();
   }
-  function activateCurrent(){
-    var items=screen==="simple"?simpleItems:advancedItems, it=items[rowIndex];
-    if(!it)return;
-    if(it.type==="nav"){setScreen("advanced");return;}
-    if(it.type==="reset"){settings=loadDefaults();saveSettings();renderRows();return;}
-    changeCurrent(1);
-  }
-  function loadDefaults(){var s={};for(var k in defaults)s[k]=defaults[k];return s;}
-  function argBool(v){return v?"1":"0";}
-  function shellCommand(){
-    return "sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh"+
+
+  function shellBool(v){return v?"1":"0";}
+  function buildCommand(){
+    var p="/media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh";
+    return "sh "+p+
       " --iface "+settings.iface+
       " --timeout "+settings.timeout+
       " --instance "+settings.instance+
-      " --fast "+argBool(settings.fast)+
-      " --full "+argBool(settings.full)+
-      " --verify "+argBool(settings.verify)+
-      " --restart "+argBool(settings.restart)+
-      " --backup "+argBool(settings.backup)+
+      " --fast "+shellBool(settings.fastScan)+
+      " --full "+shellBool(settings.fullScan)+
+      " --verify "+shellBool(settings.verify)+
+      " --restart "+shellBool(settings.restart)+
+      " --backup "+shellBool(settings.backup)+
       " --keep-backups "+settings.keepBackups+
-      " --test-leds "+argBool(settings.testLeds)+
-      " --verbose "+argBool(settings.verbose);
+      " --test-leds "+shellBool(settings.testLeds)+
+      " --verbose "+shellBool(settings.verbose);
   }
-  function setRunning(){
-    running=true;
-    document.getElementById("hero").className="statusHero";
-    document.getElementById("hero").innerHTML='<span class="spinner"></span>Searching for WLED…';
-    document.getElementById("tvIp").textContent="—";
-    document.getElementById("wledIp").textContent="—";
-    document.getElementById("hyperionIp").textContent="—";
-    document.getElementById("verify").textContent="—";
-    document.getElementById("message").textContent="Checking the current network and Hyperion configuration.";
-    document.getElementById("details").style.display="none";
-    document.getElementById("details").textContent="";
-  }
+
   function parseOutput(out){
-    var data={}, lines=(out||"").split(/\r?\n/);
-    for(var i=0;i<lines.length;i++){
-      var p=lines[i].indexOf("="); if(p>0)data[lines[i].slice(0,p)]=lines[i].slice(p+1);
+    var lines=out.split(/\r?\n/),data={},i,p,k,v;
+    for(i=0;i<lines.length;i++){
+      p=lines[i].indexOf("=");
+      if(p>0){k=lines[i].slice(0,p);v=lines[i].slice(p+1);data[k]=v;}
     }
     return data;
   }
-  function finish(out,err){
-    running=false;
-    var d=parseOutput(out);
-    document.getElementById("tvIp").textContent=d.TV_IP||"—";
-    document.getElementById("wledIp").textContent=d.WLED_IP||"—";
-    document.getElementById("hyperionIp").textContent=d.NEW_TARGET||d.HYPERION_TARGET||"—";
-    document.getElementById("verify").textContent=d.VERIFY==="OK"?"Connected":(d.VERIFY==="SKIPPED"?"Skipped":(d.VERIFY==="FAILED"?"Failed":"—"));
-    var hero=document.getElementById("hero"), msg=document.getElementById("message");
-    if(d.RESULT==="UPDATED"){
-      hero.className="statusHero ok"; hero.textContent="✓ Hyperion updated";
-      msg.textContent=(d.OLD_TARGET&&d.NEW_TARGET?d.OLD_TARGET+" → "+d.NEW_TARGET+". ":"")+"Hyperion target was updated"+(d.VERIFY==="OK"?" and reconnected successfully.":".");
-    }else if(d.RESULT==="OK"){
-      hero.className="statusHero ok"; hero.textContent="✓ Everything is OK";
-      msg.textContent="WLED and Hyperion are already using the same address. No change was required.";
-    }else{
-      hero.className="statusHero err"; hero.textContent="✕ Fix could not complete";
-      msg.textContent=d.ERROR||err||"Unknown error";
-    }
-    var details=document.getElementById("details");
-    if(settings.technical||settings.verbose){details.style.display="block";details.textContent=(out||"")+(err?("\n"+err):"");}
-    if(settings.autoClose && (d.RESULT==="OK"||d.RESULT==="UPDATED")){
-      clearTimeout(autoCloseTimer);autoCloseTimer=setTimeout(function(){window.close();},5000);
+
+  function setBusy(on){
+    busy=on;
+    if(on){
+      document.getElementById("resultIcon").innerHTML='<div class="spinner"></div>';
+      document.getElementById("resultText").textContent="Searching for WLED…";
+      document.getElementById("resultSub").textContent="Checking the current network and Hyperion target.";
     }
   }
+
+  function finish(data,raw){
+    var result=data.RESULT||"ERROR";
+    lastRaw=raw||"";
+    document.getElementById("tvIp").textContent=data.TV_IP||"—";
+    document.getElementById("wledIp").textContent=data.WLED_IP||"—";
+    document.getElementById("hyperionIp").textContent=data.NEW_TARGET||data.HYPERION_TARGET||"—";
+    document.getElementById("resultIcon").textContent=result==="ERROR"?"!":"✓";
+
+    if(result==="UPDATED"){
+      document.getElementById("resultText").textContent="Hyperion updated";
+      document.getElementById("resultSub").textContent=(data.OLD_TARGET||"old target")+" → "+(data.NEW_TARGET||data.WLED_IP||"WLED")+
+        (data.VERIFY==="OK"?" · Hyperion reconnected successfully":"");
+    }else if(result==="OK"){
+      document.getElementById("resultText").textContent="Everything is OK";
+      document.getElementById("resultSub").textContent="WLED and Hyperion already point to the same device.";
+    }else{
+      document.getElementById("resultText").textContent="WLED Fix could not complete";
+      document.getElementById("resultSub").textContent=data.ERROR||"Unknown error";
+    }
+    busy=false;render();
+    if(settings.autoClose && result!=="ERROR"){setTimeout(function(){window.close();},3500);}
+  }
+
   function runFix(){
-    if(running)return;
-    setScreen("main");setRunning();
+    if(busy)return;
+    setBusy(true);render();
     try{
       bridge=new PalmServiceBridge();
       bridge.onservicecallback=function(msg){
-        var out="",err="";
+        var r,out="";
         try{
-          var r=JSON.parse(msg);
-          out=r.stdoutString||"";
-          err=(r.stderrString||"")+(r.error?((r.stderrString?"\n":"")+"Error: "+r.error):"");
-        }catch(e){err="Invalid service response";}
-        finish(out,err);
+          r=JSON.parse(msg);
+          if(r.stdoutString)out+=r.stdoutString;
+          if(r.stderrString)out+=(out?"\n":"")+r.stderrString;
+          if(r.error)out+=(out?"\n":"")+"ERROR="+r.error;
+        }catch(e){out="RESULT=ERROR\nERROR=Invalid service response";}
+        finish(parseOutput(out),out);
       };
-      bridge.call("luna://org.webosbrew.hbchannel.service/exec",JSON.stringify({command:shellCommand()}));
-    }catch(e){finish("","Could not start Homebrew execution service");}
+      bridge.call("luna://org.webosbrew.hbchannel.service/exec",JSON.stringify({command:buildCommand()}));
+    }catch(e){finish({RESULT:"ERROR",ERROR:"Homebrew exec service unavailable"},String(e));}
+  }
+
+  function activate(){
+    var items,it;
+    if(screen==="main"){
+      if(focus===0)runFix(); else show("simple");
+      return;
+    }
+    items=screen==="simple"?simpleItems:advancedItems;it=items[focus];
+    if(it.action==="advanced"){show("advanced");return;}
+    if(it.action==="reset"){settings=clone(DEFAULTS);saveSettings();render();return;}
+    change(it,1);
   }
 
   document.addEventListener("keydown",function(e){
-    var k=e.keyCode||e.which;
-    if(k===461||k===27){
-      e.preventDefault();
-      if(screen==="advanced"){saveSettings();setScreen("simple");}
-      else if(screen==="simple"){saveSettings();setScreen("main");}
+    var code=e.keyCode||e.which,items,max;
+    if(code===461 || code===27){
+      if(screen==="advanced"){saveSettings();show("simple");}
+      else if(screen==="simple"){saveSettings();show("main");}
       else window.close();
-      return;
+      e.preventDefault();return;
     }
-    if(screen==="main"){
-      if(k===37||k===38){mainIndex=Math.max(0,mainIndex-1);renderMainFocus();e.preventDefault();}
-      else if(k===39||k===40){mainIndex=Math.min(1,mainIndex+1);renderMainFocus();e.preventDefault();}
-      else if(k===13){e.preventDefault();if(mainIndex===0)runFix();else setScreen("simple");}
-      return;
+    if(busy && screen==="main")return;
+    items=screen==="main"?[0,1]:(screen==="simple"?simpleItems:advancedItems);max=items.length;
+    if(code===38){focus=(focus-1+max)%max;render();e.preventDefault();}
+    else if(code===40){focus=(focus+1)%max;render();e.preventDefault();}
+    else if(code===37 || code===39){
+      if(screen!=="main"){
+        var it=items[focus];if(!it.action)change(it,code===39?1:-1);
+      }
+      e.preventDefault();
     }
-    var items=screen==="simple"?simpleItems:advancedItems;
-    if(k===38){rowIndex=(rowIndex-1+items.length)%items.length;renderRows();e.preventDefault();}
-    else if(k===40){rowIndex=(rowIndex+1)%items.length;renderRows();e.preventDefault();}
-    else if(k===37){changeCurrent(-1);e.preventDefault();}
-    else if(k===39){changeCurrent(1);e.preventDefault();}
-    else if(k===13){activateCurrent();e.preventDefault();}
+    else if(code===13){activate();e.preventDefault();}
   });
 
-  setScreen("main");
-  if(settings.autoScan)runFix();
-  else {
-    document.getElementById("hero").textContent="Ready";
-    document.getElementById("message").textContent="Press OK on Run Fix to scan for WLED.";
-  }
+  render();
+  if(settings.autoScan)setTimeout(runFix,350);
 }());
 </script>
 </body>
