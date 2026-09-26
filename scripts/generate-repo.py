@@ -27,7 +27,8 @@ payload = {
         {
             "id": "org.webosbrew.wledfix",
             "title": "WLED Fix",
-            "shortDescription": "One-click WLED rediscovery for Hyperion.NG on rooted LG webOS TVs.",
+            "shortDescription": "WLED discovery and Hyperion repair for rooted LG webOS TVs.",
+            "fullDescriptionUrl": f"https://raw.githubusercontent.com/{repo}/main/homebrew-description.html",
             "iconUri": icon_url,
             "manifest": {
                 "id": "org.webosbrew.wledfix",
