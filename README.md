@@ -72,3 +72,14 @@ The package is written to `dist/`.
 ## Release
 
 Push a tag such as `v1.0.0`. GitHub Actions builds the IPK and publishes it as a Release asset.
+
+
+## Add to Homebrew Channel
+
+After the first tagged release is published, add this custom repository URL in **Homebrew Channel → Settings → Add repository**:
+
+```text
+https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
+```
+
+The feed always points to the latest GitHub Release and includes the SHA-256 hash of the IPK, so Homebrew Channel can install and update WLED Fix directly.
