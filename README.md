@@ -31,18 +31,60 @@ Hyperion can store a WLED mDNS service name, but mDNS discovery may fail on phon
 - WLED 0.16.0
 - DDP streaming
 
-## Current status
+## Current release
 
-The source code, IPK build workflow, and Homebrew custom-feed generator are in place.
+The first release is published:
 
-**There is currently no GitHub Release published yet.**  
-Because of that, this Homebrew repository URL does **not** work yet:
+- Version: **v1.0.0**
+- IPK: `org.webosbrew.wledfix_1.0.0_all.ipk`
+- Homebrew feed: `repo.json`
+
+Release page:
+
+```text
+https://github.com/poiedk/wled-fix-webos/releases/tag/v1.0.0
+```
+
+## Add to Homebrew Channel
+
+In **Homebrew Channel → Settings → Add repository**, add:
 
 ```text
 https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
 ```
 
-It becomes valid automatically after the first tagged release is published.
+You can also open the Add Repository screen over SSH:
+
+```sh
+luna-send -n 1 luna://com.webos.applicationManager/launch \
+'{"id":"org.webosbrew.hbchannel","params":{"launchMode":"addRepository","url":"https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json"}}'
+```
+
+After adding the repository, **WLED Fix** should appear in Homebrew Channel and can be installed or updated from there.
+
+## Install manually
+
+The v1.0.0 IPK is available at:
+
+```text
+https://github.com/poiedk/wled-fix-webos/releases/download/v1.0.0/org.webosbrew.wledfix_1.0.0_all.ipk
+```
+
+If you copy it to the TV as `/tmp/org.webosbrew.wledfix_1.0.0_all.ipk`, install it with:
+
+```sh
+opkg install /tmp/org.webosbrew.wledfix_1.0.0_all.ipk
+```
+
+Then launch **WLED Fix** from the LG launcher.
+
+## Manual run after installation
+
+The discovery script ships inside the application:
+
+```sh
+sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh
+```
 
 ## Build locally
 
@@ -57,66 +99,6 @@ The package is written to:
 dist/org.webosbrew.wledfix_<version>_all.ipk
 ```
 
-## Create the first release
-
-Create and push the first version tag:
-
-```sh
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The **Release** GitHub Actions workflow will then:
-
-1. build the IPK,
-2. generate `repo.json`,
-3. calculate and include the IPK SHA-256 hash,
-4. create the GitHub Release,
-5. upload both the IPK and `repo.json` as release assets.
-
-After that, the stable custom-repository URL is:
-
-```text
-https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
-```
-
-## Add to Homebrew Channel
-
-Only **after the first release exists**, add the repository in:
-
-**Homebrew Channel → Settings → Add repository**
-
-using:
-
-```text
-https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json
-```
-
-You can also open the Add Repository screen over SSH:
-
-```sh
-luna-send -n 1 luna://com.webos.applicationManager/launch \
-'{"id":"org.webosbrew.hbchannel","params":{"launchMode":"addRepository","url":"https://github.com/poiedk/wled-fix-webos/releases/latest/download/repo.json"}}'
-```
-
-## Install from an IPK manually
-
-Once an IPK exists, copy it to the TV and install it, for example:
-
-```sh
-opkg install /tmp/org.webosbrew.wledfix_1.0.0_all.ipk
-```
-
-Then launch **WLED Fix** from the LG launcher.
-
-## Manual run after installation
-
-The script ships inside the app package:
-
-```sh
-sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh
-```
-
 ## Safety
 
 Before changing Hyperion's database, WLED Fix refreshes:
@@ -127,7 +109,7 @@ Before changing Hyperion's database, WLED Fix refreshes:
 
 The script only updates the WLED device entry for Hyperion instance 0. If Hyperion already points to the detected WLED IP, it exits without modifying the database or restarting Hyperion.
 
-## Release updates
+## Future releases
 
 For future versions:
 
@@ -136,4 +118,6 @@ For future versions:
 3. create a matching tag such as `v1.1.0`,
 4. push the tag.
 
-The Homebrew feed URL stays the same because it always resolves through the latest GitHub Release.
+The **Release** GitHub Actions workflow builds the IPK, generates `repo.json`, calculates the SHA-256 hash, and publishes both files to the release.
+
+The Homebrew repository URL stays the same because it always points to the latest release.
