@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WLED Fix</title>
+  <style>
+    html, body { width:100%; height:100%; margin:0; background:#101522; color:#fff; font-family:Arial,sans-serif; }
+    .wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; padding:40px; box-sizing:border-box; }
+    h1 { font-size:54px; margin:0 0 24px; }
+    #status { font-size:30px; line-height:1.4; white-space:pre-wrap; max-width:1200px; }
+    .hint { opacity:.7; margin-top:24px; font-size:22px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WLED Fix</h1>
+  <div id="status">Searching for WLED…</div>
+  <div class="hint">The app will close automatically.</div>
+</div>
+<script>
+(function () {
+  var status = document.getElementById("status");
+  var bridge = new PalmServiceBridge();
+
+  bridge.onservicecallback = function (msg) {
+    try {
+      var r = JSON.parse(msg);
+      var out = "";
+      if (r.stdoutString) out += r.stdoutString;
+      if (r.stderrString) out += (out ? "\n" : "") + r.stderrString;
+      if (r.error) out += (out ? "\n" : "") + "Error: " + r.error;
+      status.textContent = out || "Done";
+    } catch (e) {
+      status.textContent = "Done";
+    }
+
+    setTimeout(function () {
+      window.close();
+    }, 4500);
+  };
+
+  bridge.call(
+    "luna://org.webosbrew.hbchannel.service/exec",
+    JSON.stringify({
+      command: "sh /media/developer/apps/usr/palm/applications/org.webosbrew.wledfix/wled-auto.sh"
+    })
+  );
+}());
+</script>
+</body>
+</html>
