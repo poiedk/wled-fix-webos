@@ -1,0 +1,38 @@
+name: Bootstrap v1.0.0
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build IPK
+        run: |
+          chmod +x scripts/build-ipk.sh
+          ./scripts/build-ipk.sh
+
+      - name: Generate Homebrew repo feed
+        run: |
+          python3 scripts/generate-repo.py v1.0.0 dist/*.ipk
+
+      - name: Create v1.0.0 release and tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view v1.0.0 >/dev/null 2>&1 && exit 0
+          gh release create v1.0.0 \
+            --target "$GITHUB_SHA" \
+            --title "v1.0.0" \
+            --generate-notes \
+            dist/*.ipk \
+            dist/repo.json
