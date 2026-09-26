@@ -2,42 +2,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP_ID="org.webosbrew.wledfix"
-VERSION="$(python3 - <<'PY'
-import json
-with open("app/appinfo.json","r",encoding="utf-8") as f:
-    print(json.load(f)["version"])
-PY
-)"
 OUT_DIR="$ROOT/dist"
-WORK="$ROOT/.build"
-PKG="$APP_ID"
-APP_DEST="$WORK/data/usr/palm/applications/$APP_ID"
 
-rm -rf "$WORK" "$OUT_DIR"
-mkdir -p "$WORK/control" "$APP_DEST" "$OUT_DIR"
+command -v ares-package >/dev/null 2>&1 || {
+  echo "ERROR: ares-package is required."
+  echo "Install the official webOS CLI: npm install -g @webos-tools/cli"
+  exit 1
+}
 
-cp -a "$ROOT/app/." "$APP_DEST/"
-chmod 755 "$APP_DEST/wled-auto.sh"
+rm -rf "$OUT_DIR"
+mkdir -p "$OUT_DIR"
 
-cat > "$WORK/control/control" <<EOF
-Package: $PKG
-Version: $VERSION
-Architecture: all
-Maintainer: poiedk
-Description: One-click WLED rediscovery for Hyperion.NG on rooted LG webOS TVs.
-Section: misc
-Priority: optional
-EOF
+cd "$ROOT"
+ares-package --no-minify -o "$OUT_DIR" app
 
-printf '2.0\n' > "$WORK/debian-binary"
-
-tar -C "$WORK/control" -czf "$WORK/control.tar.gz" .
-tar -C "$WORK/data" -czf "$WORK/data.tar.gz" .
-
-(
-  cd "$WORK"
-  ar rcs "$OUT_DIR/${PKG}_${VERSION}_all.ipk" debian-binary control.tar.gz data.tar.gz
-)
-
-echo "Built: $OUT_DIR/${PKG}_${VERSION}_all.ipk"
+echo "Built package:"
+ls -lh "$OUT_DIR"/*.ipk
