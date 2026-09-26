@@ -4,12 +4,12 @@ WLED Fix is a remote-friendly utility for rooted LG webOS TVs running Hyperion.N
 
 ## Current release
 
-**v1.1.0**
+**v1.1.2**
 
 Highlights:
 
 - TV-native dark UI designed for remote control
-- **BACK = Exit**
+- **BACK only navigates back; Exit is a separate action**
 - Simple and Advanced Settings
 - faster WLED discovery
 - Hyperion target verification after a fix
@@ -110,3 +110,13 @@ Creating a `v*` tag triggers GitHub Actions to:
 4. publish both files as GitHub Release assets.
 
 The Homebrew repository URL remains unchanged between releases.
+
+
+## v1.1.2
+
+- BACK no longer exits the app from the main screen.
+- Settings BACK returns to the previous screen.
+- Added a dedicated **Exit App** action with confirmation.
+- Redesigned the main screen with a cleaner status panel and three large TV-friendly actions.
+- Replaced the launcher/Homebrew icon with a clean 256x256 PNG.
+- Kept the dark launcher tile metadata.
